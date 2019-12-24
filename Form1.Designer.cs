@@ -1,6 +1,6 @@
 ﻿namespace Sapper_2019
 {
-	partial class Form1
+	partial class MainForm
 	{
 		/// <summary>
 		/// Обязательная переменная конструктора.
@@ -28,13 +28,37 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.components = new System.ComponentModel.Container();
+			this.viewport = new System.Windows.Forms.PictureBox();
+			((System.ComponentModel.ISupportInitialize)(this.viewport)).BeginInit();
+			this.SuspendLayout();
+			// 
+			// viewport
+			// 
+			this.viewport.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.viewport.Location = new System.Drawing.Point(0, 0);
+			this.viewport.Name = "viewport";
+			this.viewport.Size = new System.Drawing.Size(421, 337);
+			this.viewport.TabIndex = 0;
+			this.viewport.TabStop = false;
+			// 
+			// MainForm
+			// 
+			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(800, 450);
+			this.ClientSize = new System.Drawing.Size(421, 337);
+			this.Controls.Add(this.viewport);
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+			this.Name = "MainForm";
 			this.Text = "Form1";
+			this.ResizeEnd += new System.EventHandler(this.MainForm_ResizeEnd);
+			((System.ComponentModel.ISupportInitialize)(this.viewport)).EndInit();
+			this.ResumeLayout(false);
+
 		}
 
 		#endregion
+
+		private System.Windows.Forms.PictureBox viewport;
 	}
 }
 

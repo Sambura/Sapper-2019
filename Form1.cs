@@ -10,11 +10,23 @@ using System.Windows.Forms;
 
 namespace Sapper_2019
 {
-	public partial class Form1 : Form
+	public partial class MainForm : Form
 	{
-		public Form1()
+		public MainForm()
 		{
 			InitializeComponent();
+			buttons = new Dictionary<string, GUI.Button>();
+			textures = new Dictionary<string, Bitmap>();
+			ReadTheme();
+			buttons.Add("corner_exit", new GUI.Button(new Action(FormClose)));
+			controlBoxHeight = 25;
+			FormResize();
+			LocateGUI();
+		}
+
+		private void MainForm_ResizeEnd(object sender, EventArgs e)
+		{
+			FormResize();
 		}
 	}
 }
