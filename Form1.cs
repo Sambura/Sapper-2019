@@ -15,14 +15,37 @@ namespace Sapper_2019
 		public MainForm()
 		{
 			InitializeComponent();
-			buttons = new Dictionary<string, GUI.Button>();
+			controls = new Dictionary<string, NewControl>();
 			ReadTheme();
-			buttons.Add("control_box", new GUI.Button(new Action(StartRelocaing), ""));
-			buttons.Add("bottom_grip", new GUI.Button(new Action(BottomResize), ""));
-			buttons.Add("right_grip", new GUI.Button(new Action(RightResize), ""));
-			buttons.Add("bottom_right_grip", new GUI.Button(new Action(BottomRightResize), ""));
-			buttons.Add("corner_exit", new GUI.Button(new Action(FormClose), "CloseButton"));
+			NewControl control;
+			control = new NewControl("");
+			control.MouseDownLeft += StartRelocaing;
+			control.MouseUpLeft += StopRelocaing;
+			controls.Add("control_box", control);
+			control = new NewControl("");
+			control.MouseEnter += () => Cursor.Current = Cursors.SizeNS;
+			control.MouseLeave += () => Cursor.Current = Cursors.Default;
+			control.MouseDownLeft += () => resize = 5;
+			control.MouseUpLeft += () => resize = 0;
+			controls.Add("bottom_grip", control);
+			control = new NewControl("");
+			control.MouseEnter += () => Cursor.Current = Cursors.SizeWE;
+			control.MouseLeave += () => Cursor.Current = Cursors.Default;
+			control.MouseDownLeft += () => resize = 3;
+			control.MouseUpLeft += () => resize = 0;
+			controls.Add("right_grip", control);
+			control = new NewControl("");
+			control.MouseEnter += () => Cursor.Current = Cursors.SizeNWSE;
+			control.MouseLeave += () => Cursor.Current = Cursors.Default;
+			control.MouseDownLeft += () => resize = 4;
+			control.MouseUpLeft += () => resize = 0;
+			controls.Add("bottom_right_grip", control);
+			control = new NewControl("CloseButton");
+			control.MouseClickLeft += CloseForm;
+			controls.Add("corner_exit", control);
 			controlBoxHeight = 25;
+			minWidth = 50;
+			minHeight = 50 + controlBoxHeight;
 			FormResize();
 			updater.Start();
 		}
@@ -37,49 +60,19 @@ namespace Sapper_2019
 			UpdateFrame();
 		}
 
-		private void Viewport_MouseMove(object sender, MouseEventArgs e)
+		private void MouseStateChanged(object sender, MouseEventArgs e)
 		{
 			cursor = e.Location;
-			if (moving)
-			{
-				Left = Cursor.Position.X - grip.X;
-				Top = Cursor.Position.Y - grip.Y;
-			} else switch (resize)
-				{
-					case 4:
-						Size = new Size(Width, Cursor.Position.Y - Top + 1);
-						FormResize();
-						break;
-					case 3:
-						Size = new Size(Cursor.Position.X - Left + 1, Height);
-						FormResize();
-						break;
-					case 7:
-						Size = new Size(Cursor.Position.X - Left + 1, Cursor.Position.Y - Top + 1);
-						FormResize();
-						break;
-				}
+			leftMouse = e.Button.HasFlag(MouseButtons.Left);
+			if (moving) MoveForm();
+			if (resize != 0) ResizeForm();
+			UpdateControls();
 		}
 
 		private void Viewport_MouseLeave(object sender, EventArgs e)
 		{
 			cursor.X = -100;
-		}
-
-		private void Viewport_MouseDown(object sender, MouseEventArgs e)
-		{
-			if (e.Button != MouseButtons.Left) return;
-			leftMouse = true;
-			if (hovered != null)
-				hovered.Click();
-		}
-
-		private void Viewport_MouseUp(object sender, MouseEventArgs e)
-		{
-			if (e.Button != MouseButtons.Left) return;
-			leftMouse = false;
-			moving = false;
-			resize = 0;
+			UpdateControls();
 		}
 	}
 }

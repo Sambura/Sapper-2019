@@ -1,0 +1,4 @@
+﻿CloseButton "close_button.png"
+	Normal 0 0 50 50
+	Hovered 0 50 50 50
+	Pressed 0 100 50 50

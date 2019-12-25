@@ -29,3 +29,4 @@ D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\
 D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\flag.psd
 D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\pics.psd
 D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\close_button.png
+D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\Theme.txt

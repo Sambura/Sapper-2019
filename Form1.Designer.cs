@@ -42,10 +42,10 @@
 			this.viewport.Size = new System.Drawing.Size(421, 337);
 			this.viewport.TabIndex = 0;
 			this.viewport.TabStop = false;
-			this.viewport.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseDown);
+			this.viewport.MouseDown += new System.Windows.Forms.MouseEventHandler(this.MouseStateChanged);
 			this.viewport.MouseLeave += new System.EventHandler(this.Viewport_MouseLeave);
-			this.viewport.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseMove);
-			this.viewport.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseUp);
+			this.viewport.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MouseStateChanged);
+			this.viewport.MouseUp += new System.Windows.Forms.MouseEventHandler(this.MouseStateChanged);
 			// 
 			// updater
 			// 
