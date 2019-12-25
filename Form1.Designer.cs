@@ -28,7 +28,9 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
 			this.viewport = new System.Windows.Forms.PictureBox();
+			this.updater = new System.Windows.Forms.Timer(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.viewport)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -40,6 +42,15 @@
 			this.viewport.Size = new System.Drawing.Size(421, 337);
 			this.viewport.TabIndex = 0;
 			this.viewport.TabStop = false;
+			this.viewport.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseDown);
+			this.viewport.MouseLeave += new System.EventHandler(this.Viewport_MouseLeave);
+			this.viewport.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseMove);
+			this.viewport.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseUp);
+			// 
+			// updater
+			// 
+			this.updater.Interval = 10;
+			this.updater.Tick += new System.EventHandler(this.Updater_Tick);
 			// 
 			// MainForm
 			// 
@@ -59,6 +70,7 @@
 		#endregion
 
 		private System.Windows.Forms.PictureBox viewport;
+		private System.Windows.Forms.Timer updater;
 	}
 }
 

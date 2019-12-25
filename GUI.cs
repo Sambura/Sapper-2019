@@ -12,19 +12,20 @@ namespace Sapper_2019
 		public class Button
 		{
 			private readonly Action clickAction;
+			private readonly string name;
 			private Rectangle bounds;
 
-			private bool triggered;
+			private bool hovered;
 
 			public bool IsTriggered(Point ptr)
 			{
-				triggered = bounds.Contains(ptr);
-				return triggered;
+				hovered = bounds.Contains(ptr);
+				return hovered;
 			}
 
 			public bool IsTriggered()
 			{
-				return triggered;
+				return hovered;
 			}
 
 			public void Click()
@@ -42,11 +43,22 @@ namespace Sapper_2019
 				bounds.Size = newsz;
 			}
 
-			public Button(Action clickAction)
+			public string GetName()
+			{
+				return name;
+			}
+
+			public Rectangle GetRect()
+			{
+				return bounds;
+			}
+
+			public Button(Action clickAction, string name)
 			{
 				this.clickAction = clickAction;
+				this.name = name;
 				bounds = new Rectangle();
-				triggered = false;
+				hovered = false;
 			}
 		}
 	}
