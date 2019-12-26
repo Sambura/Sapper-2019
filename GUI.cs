@@ -44,6 +44,7 @@ namespace Sapper_2019
 			{
 				Hovered = true;
 				MouseEnter?.Invoke();
+				MouseMove?.Invoke();
 			}
 			else if (hovered && Hovered) // Hovered now and was earlier
 			{

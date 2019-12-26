@@ -43,10 +43,19 @@ namespace Sapper_2019
 			control = new NewControl("CloseButton");
 			control.MouseClickLeft += CloseForm;
 			controls.Add("corner_exit", control);
+			control = new NewControl("");
+			control.MouseLeave += GameMouseLeave;
+			control.MouseMove += GameMouseMove;
+			control.MouseDownLeft += GameMouseDown;
+			control.MouseUpLeft += GameMouseUp;
+			controls.Add("game_field", control);
 			controlBoxHeight = 25;
 			minWidth = 50;
 			minHeight = 50 + controlBoxHeight;
+			gameWidth = 9;
+			gameHeight = 9;
 			FormResize();
+			StartGame();
 			updater.Start();
 		}
 

@@ -49,7 +49,7 @@
 			// 
 			// updater
 			// 
-			this.updater.Interval = 10;
+			this.updater.Interval = 1;
 			this.updater.Tick += new System.EventHandler(this.Updater_Tick);
 			// 
 			// MainForm

@@ -1,4 +1,36 @@
-﻿CloseButton "close_button.png"
+﻿# Text theme file
+# Syntax:
+#	T <Key> <path_to_file> // Set texture Key from file
+#		Normal x y w h
+#		Hovered x y w h
+#		Pressed x y w h
+#
+#	This will probably be turned into Animation setting
+#
+#	P <Key> <int_value> // Set parameter key
+#	A <Key> <clip_count> <path_to_file> // Set animation Key from file with given frames count
+#		clip_count lines:
+#		x y w h // Frame 1
+#		x y w h // Frame 2
+#
+#	C <Key> <color_code> // Set color Key
+#
+
+C BG #EEEEEE
+C ControlBoxBG #111111
+C GridColor #000000
+
+T CloseButton "close_button.png"
 	Normal 0 0 50 50
 	Hovered 0 50 50 50
 	Pressed 0 100 50 50
+P GridWidth 1
+
+# Experimental section
+
+A ClosedCellHover 5 "cell_hover.png"
+	0 0 100 100
+	0 100 100 100
+	0 200 100 100
+	0 300 100 100
+	0 400 100 100

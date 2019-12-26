@@ -17,6 +17,8 @@ namespace Sapper_2019
 		private Dictionary<string, NewControl> controls;
 		private Dictionary<string, Bitmap> textures;
 		private Dictionary<string, Color> colorTheme;
+		private Dictionary<string, int> parameters;
+		private SortedSet<Coords> toDraw;
 
 		private Bitmap bitmap;
 		private Graphics graphics;
@@ -33,8 +35,15 @@ namespace Sapper_2019
 		private int resize;
 
 		private Point gameFieldLocation;
+		private Rectangle gameFieldBounds;
 		private Bitmap gameField;
 		private Graphics gfGraphics;
+
+		private GameCell[,] GameField;
+		private int gameWidth;
+		private int gameHeight;
+		private int cellSize;
+		private int gridWidth;
 
 		private void LocateGUI()
 		{
@@ -49,6 +58,21 @@ namespace Sapper_2019
 			controls["right_grip"].SetSize(new Size(2, Height));
 			controls["bottom_right_grip"].SetPlace(new Point(Width - 5, Height - 5));
 			controls["bottom_right_grip"].SetSize(new Size(5, 5));
+
+			gridWidth = parameters["GridWidth"];
+			int szW = Width - 6;
+			int szH = Height - controlBoxHeight - 6;
+			cellSize = Math.Min((szW - (gameWidth + 1) * gridWidth) / gameWidth,
+				(szH - (gameHeight + 1) * gridWidth) / gameHeight);
+
+			gameField = new Bitmap(cellSize * gameWidth + (gameWidth + 1) * gridWidth
+				, cellSize * gameHeight + (gameHeight + 1) * gridWidth);
+			gfGraphics = Graphics.FromImage(gameField);
+			gameFieldLocation = new Point(3, 3 + controlBoxHeight);
+			gameFieldBounds = new Rectangle(3, 3 + controlBoxHeight, cellSize * gameWidth + (gameWidth + 1) * gridWidth
+				, cellSize * gameHeight + (gameHeight + 1) * gridWidth);
+
+			controls["game_field"].Bounds = gameFieldBounds;
 		}
 
 		private void UpdateControls()
@@ -131,10 +155,6 @@ namespace Sapper_2019
 		{
 			bitmap = new Bitmap(Width, Height);
 			graphics = Graphics.FromImage(bitmap);
-			int sz = Math.Min(Width, Height - controlBoxHeight) - 6;
-			gameField = new Bitmap(sz, sz);
-			gfGraphics = Graphics.FromImage(gameField);
-			gameFieldLocation = new Point(3, 3 + controlBoxHeight);
 			LocateGUI();
 			DrawInitial();
 			InitialGameField();
@@ -143,46 +163,249 @@ namespace Sapper_2019
 
 		private void UpdateGameField()
 		{
+			var toDel = new List<Coords>();
+			foreach (var i in toDraw)
+			{
+				if (i.CompareTo(GameCell.Hovered) == 0)
+				{
+					GameField[i.X, i.Y].NextFrame();
+				}
+				else
+				{
+					if (GameField[i.X, i.Y].PrevFrame())
+					{
+						toDel.Add(i);
+					}
+				}
+				gfGraphics.DrawImage(textures[GameField[i.X, i.Y].GetFrameName()],
+					i.X * cellSize + gridWidth * (i.X + 1),
+					i.Y * cellSize + gridWidth * (i.Y + 1),
+					cellSize, cellSize);
+			}
+			foreach (var i in toDel)
+			{
+				toDraw.Remove(i);
+			}
+		}
 
+		private void GameMouseMove()
+		{
+			int x = cursor.X - gameFieldLocation.X;
+			x /= cellSize + gridWidth;
+			int y = cursor.Y - gameFieldLocation.Y;
+			y /= cellSize + gridWidth;
+			if (x == gameWidth) x--; if (y == gameHeight) y--;
+			GameCell.Hovered = new Coords(x, y);
+			toDraw.Add(GameCell.Hovered);
+		}
+
+		private void GameMouseLeave()
+		{
+			GameCell.Hovered = new Coords(-1, -1);
+		}
+
+		private void GameMouseDown()
+		{
+
+		}
+
+		private void GameMouseUp()
+		{
+
+		}
+
+		private void StartGame()
+		{
+			GameField = new GameCell[gameWidth, gameHeight];
+			toDraw = new SortedSet<Coords>();
+			for (int x = 0; x < gameWidth; x++)
+			{
+				for (int y = 0; y < gameHeight; y++)
+				{
+					GameField[x, y].SetAnimation("ClosedCellHover", parameters["ClosedCellHoverClipCount"]);
+				}
+			}
 		}
 
 		private void InitialGameField()
 		{
-			gfGraphics.DrawRectangle(new Pen(colorTheme["GridColor"]), new Rectangle(0, 0, gameField.Width - 1, gameField.Height - 1));
+			Pen pen = new Pen(colorTheme["GridColor"], gridWidth);
+			int w = gameField.Width;
+			int h = gameField.Height;
+			for (int x = 0; x <= gameWidth; x++)
+			{
+				int X = x * cellSize + x * gridWidth;
+				gfGraphics.DrawLine(pen, X, 0, X, h);
+			}
+
+			for (int y = 0; y <= gameHeight; y++)
+			{
+				int Y = y * cellSize + y * gridWidth;
+				gfGraphics.DrawLine(pen, 0, Y, w, Y);
+			}
 		}
 
 		private void ReadTheme()
 		{
 			colorTheme = new Dictionary<string, Color>();
 			textures = new Dictionary<string, Bitmap>();
+			parameters = new Dictionary<string, int>();
 			string path = "Resources\\Themes\\Classic\\";
-			// Color theme reading
-			FileInfo di = new FileInfo(path + "colorTheme.txt");
+			var di = new FileInfo(path + "Theme.txt");
 			var reader = di.OpenText();
 			while (!reader.EndOfStream)
 			{
-				var s = reader.ReadLine().Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-				colorTheme.Add(s[0], ColorTranslator.FromHtml(s[1]));
-			}
-			// Textures reading
-			di = new FileInfo(path + "Theme.txt");
-			reader = di.OpenText();
-			while (!reader.EndOfStream)
-			{
 				var s = reader.ReadLine().Replace('\t', ' ').Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-				string prefix = s[0];
-				string fileName = s[1];
-				for (int i = 2; i < s.Length; i++) if (fileName[fileName.Length - 1] != '"') fileName += s[i];
-				fileName = fileName.Substring(1, fileName.Length - 2);
-				var bit = new Bitmap(path + fileName);
-				textures.Add(prefix + "Source", bit);
-				for (int i = 0; i < 3; i++)
+				if (s.Length == 0) continue;
+				char param = s[0][0];
+				switch (param)
 				{
-					s = reader.ReadLine().Replace('\t', ' ').Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-					textures.Add(prefix + s[0], ImagingPlus.GetClip(bit, 
-						int.Parse(s[1]), int.Parse(s[2]), int.Parse(s[3]), int.Parse(s[4])));
+					case '#':
+						continue;
+
+					case 'C':
+						colorTheme.Add(s[1], ColorTranslator.FromHtml(s[2]));
+						break;
+
+					case 'T':
+						{
+							string prefix = s[1];
+							string fileName = s[2];
+							for (int i = 2; i < s.Length; i++) if (fileName[fileName.Length - 1] != '"') fileName += s[i];
+							fileName = fileName.Substring(1, fileName.Length - 2);
+							var bit = new Bitmap(path + fileName);
+							textures.Add(prefix + "Source", bit);
+							for (int i = 0; i < 3; i++)
+							{
+								s = reader.ReadLine().Replace('\t', ' ').Split(new char[1] { ' ' },
+									StringSplitOptions.RemoveEmptyEntries);
+								if (s.Length == 0) continue;
+								if (s[0][0] == '#')
+								{
+									i--;
+									continue;
+								}
+								textures.Add(prefix + s[0], ImagingPlus.GetClip(bit,
+									int.Parse(s[1]), int.Parse(s[2]), int.Parse(s[3]), int.Parse(s[4])));
+							}
+							break;
+						}
+
+					case 'P':
+						parameters.Add(s[1], int.Parse(s[2]));
+						break;
+
+					case 'A':
+						{
+							int clipCount = int.Parse(s[2]);
+							string prefix = s[1];
+							string fileName = s[3];
+							for (int i = 3; i < s.Length; i++) if (fileName[fileName.Length - 1] != '"') fileName += s[i];
+							fileName = fileName.Substring(1, fileName.Length - 2);
+							var bit = new Bitmap(path + fileName);
+							textures.Add(prefix + "Source", bit);
+							parameters.Add(prefix + "ClipCount", clipCount);
+							for (int i = 0; i < clipCount; i++)
+							{
+								s = reader.ReadLine().Replace('\t', ' ').Split(new char[1] { ' ' },
+									StringSplitOptions.RemoveEmptyEntries);
+								if (s.Length == 0) continue;
+								if (s[0][0] == '#')
+								{
+									i--;
+									continue;
+								}
+								textures.Add(prefix + i.ToString(), ImagingPlus.GetClip(bit,
+									int.Parse(s[0]), int.Parse(s[1]), int.Parse(s[2]), int.Parse(s[3])));
+							}
+							break;
+						}
+
+					default:
+						MessageBox.Show("Theme file reading error: unexpected prefix: " + param + "\n[" + di.FullName + "]"
+							, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+						break;
 				}
 			}
+		}
+	}
+
+	public struct GameCell
+	{
+		public static Coords Hovered { get; set; }
+		public bool HasBomb { get; set; }
+		public bool HasFlag { get; set; }
+		public bool IsOpened { get; set; }
+		public bool Inited { get; private set; }
+		public int BombCount { get; private set; }
+
+		private int clipCount;
+		private int index;
+		private string animation;
+
+		public void SetAnimation(string anim, int clipCount)
+		{
+			animation = anim;
+			this.clipCount = clipCount;
+			index = 0;
+		}
+
+		public void NextFrame()
+		{
+			if (index == clipCount - 1) return;
+			index++;
+		}
+
+		public bool PrevFrame()
+		{
+			if (index == 0) return true;
+			index--;
+			return false;
+		}
+
+		public string GetFrameName()
+		{
+			return animation + index.ToString();
+		}
+
+		public void UpdateFrame()
+		{
+
+		}
+
+		public void SetBombCount(int bombCount)
+		{
+			BombCount = bombCount;
+		}
+
+		public void InitCell(bool hasBomb)
+		{
+			Inited = true;
+			HasBomb = hasBomb;
+		}
+	}
+
+	public struct Coords : IComparable<Coords>
+	{
+		public int X { get; set; }
+		public int Y { get; set; }
+
+		public int CompareTo(Coords other)
+		{
+			if (X == other.X)
+			{
+				if (Y == other.Y) return 0;
+				if (Y < other.Y) return 1;
+				return -1;
+			}
+			if (X < other.X) return 1;
+			return -1;
+		}
+
+		public Coords(int x, int y)
+		{
+			X = x;
+			Y = y;
 		}
 	}
 }

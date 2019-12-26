@@ -12,7 +12,6 @@ D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\
 D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\blasted.png
 D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\bomb.png
 D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\cell_hover.png
-D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\colorTheme.txt
 D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\empty.png
 D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\empty_low.png
 D:\Users\super\Documents\Visual Studio Projects\Sapper 2019\bin\Debug\Resources\Themes\Classic\empty_rise.png

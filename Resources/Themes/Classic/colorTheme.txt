@@ -1,3 +1,0 @@
-﻿BG #EEEEEE // Key [without spaces] - Value [#RRGGBB]
-ControlBoxBG #111111
-GridColor #000000
