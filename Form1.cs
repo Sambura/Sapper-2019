@@ -48,14 +48,16 @@ namespace Sapper_2019
 			control.MouseMove += GameMouseMove;
 			control.MouseDownLeft += GameMouseDown;
 			control.MouseUpLeft += GameMouseUp;
+			control.MouseClickRight += GameMouseRightClick;
 			controls.Add("game_field", control);
 			controlBoxHeight = 25;
 			minWidth = 50;
 			minHeight = 50 + controlBoxHeight;
 			gameWidth = 9;
 			gameHeight = 9;
-			FormResize();
+			bombCount = 10;
 			StartGame();
+			FormResize();
 			updater.Start();
 		}
 
@@ -73,6 +75,7 @@ namespace Sapper_2019
 		{
 			cursor = e.Location;
 			leftMouse = e.Button.HasFlag(MouseButtons.Left);
+			rightMouse = e.Button.HasFlag(MouseButtons.Right);
 			if (moving) MoveForm();
 			if (resize != 0) ResizeForm();
 			UpdateControls();

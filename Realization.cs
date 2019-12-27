@@ -28,7 +28,7 @@ namespace Sapper_2019
 		private int minHeight;
 
 		private Point cursor;
-		private bool leftMouse;
+		private bool leftMouse, rightMouse;
 		private Point grip;
 		private NewControl hovered;
 		private bool moving;
@@ -42,8 +42,12 @@ namespace Sapper_2019
 		private GameCell[,] GameField;
 		private int gameWidth;
 		private int gameHeight;
+		private int bombCount;
 		private int cellSize;
 		private int gridWidth;
+
+		private int[,] dd = new int[8, 2] { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 },
+			{ 1, -1 }, { 1, 1 }, { -1, 1 }, { -1, -1 } };
 
 		private void LocateGUI()
 		{
@@ -80,7 +84,7 @@ namespace Sapper_2019
 			hovered = null;
 			foreach (var control in controls)
 			{
-				control.Value.UpdateMouseState(cursor, leftMouse);
+				control.Value.UpdateMouseState(cursor, leftMouse, rightMouse);
 				if (control.Value.Hovered) hovered = control.Value;
 			}
 		}
@@ -133,7 +137,7 @@ namespace Sapper_2019
 			{
 				if (i.Value.Name == "") continue;
 				if (i.Value == hovered)
-					if (i.Value.Pressed) graphics.DrawImage(textures[i.Value.Name + "Pressed"], i.Value.Bounds);
+					if (i.Value.PressedL) graphics.DrawImage(textures[i.Value.Name + "Pressed"], i.Value.Bounds);
 					else graphics.DrawImage(textures[i.Value.Name + "Hovered"], i.Value.Bounds);
 				else
 					graphics.DrawImage(textures[i.Value.Name + "Normal"], i.Value.Bounds);
@@ -166,9 +170,12 @@ namespace Sapper_2019
 			var toDel = new List<Coords>();
 			foreach (var i in toDraw)
 			{
-				if (i.CompareTo(GameCell.Hovered) == 0)
+				if (i.CompareTo(GameCell.Hovered) == 0 || GameField[i.X, i.Y].IsOpened)
 				{
-					GameField[i.X, i.Y].NextFrame();
+					if (GameField[i.X, i.Y].NextFrame())
+					{
+						toDel.Add(i);
+					}
 				}
 				else
 				{
@@ -177,10 +184,18 @@ namespace Sapper_2019
 						toDel.Add(i);
 					}
 				}
-				gfGraphics.DrawImage(textures[GameField[i.X, i.Y].GetFrameName()],
-					i.X * cellSize + gridWidth * (i.X + 1),
+				var rect = new Rectangle(i.X * cellSize + gridWidth * (i.X + 1),
 					i.Y * cellSize + gridWidth * (i.Y + 1),
 					cellSize, cellSize);
+				//gfGraphics.Clip = new Region(rect);
+				//gfGraphics.Clear(Color.White);
+				gfGraphics.DrawImage(textures["Cell" + GameField[i.X, i.Y].BombCount.ToString()],
+					rect);
+				if (GameField[i.X, i.Y].HasBomb && GameField[i.X, i.Y].IsOpened)
+					gfGraphics.DrawImage(textures["Bomb0"], rect);
+				gfGraphics.DrawImage(textures[GameField[i.X, i.Y].GetFrameName()],
+					rect);
+				//gfGraphics.ResetClip();
 			}
 			foreach (var i in toDel)
 			{
@@ -195,23 +210,96 @@ namespace Sapper_2019
 			int y = cursor.Y - gameFieldLocation.Y;
 			y /= cellSize + gridWidth;
 			if (x == gameWidth) x--; if (y == gameHeight) y--;
+			if (GameCell.Hovered.X > 0)
+			if (!GameField[GameCell.Hovered.X, GameCell.Hovered.Y].IsOpened)
+				toDraw.Add(GameCell.Hovered);
 			GameCell.Hovered = new Coords(x, y);
-			toDraw.Add(GameCell.Hovered);
+			if (!GameField[x, y].IsOpened)
+				toDraw.Add(GameCell.Hovered);
 		}
 
 		private void GameMouseLeave()
 		{
+			if (!GameField[GameCell.Hovered.X, GameCell.Hovered.Y].IsOpened)
+				toDraw.Add(GameCell.Hovered);
 			GameCell.Hovered = new Coords(-1, -1);
 		}
 
 		private void GameMouseDown()
 		{
-
+			GameCell.PressedL = GameCell.Hovered;
 		}
 
 		private void GameMouseUp()
 		{
+			if (GameCell.PressedL.CompareTo(GameCell.Hovered) == 0 && 
+				!GameField[GameCell.PressedL.X, GameCell.PressedL.Y].IsOpened
+				&&
+				!GameField[GameCell.PressedL.X, GameCell.PressedL.Y].HasFlag)
+			{
+				if (!GameField[GameCell.PressedL.X, GameCell.PressedL.Y].Inited) GenerateField(GameCell.PressedL);
+				if (GameField[GameCell.PressedL.X, GameCell.PressedL.Y].HasBomb)
+				{
+					GameOver(GameCell.PressedL);
+				} else
+				{
+					OpenCell(GameCell.PressedL);
+				}
+			}
+		}
 
+		private void GameMouseRightClick()
+		{
+			if (!GameField[0, 0].Inited) return;
+			if (!GameField[GameCell.Hovered.X, GameCell.Hovered.Y].IsOpened)
+			{
+				GameField[GameCell.Hovered.X, GameCell.Hovered.Y].HasFlag =
+					!GameField[GameCell.Hovered.X, GameCell.Hovered.Y].HasFlag;
+				toDraw.Add(GameCell.Hovered);
+				if (GameField[GameCell.Hovered.X, GameCell.Hovered.Y].HasFlag)
+					GameField[GameCell.Hovered.X, GameCell.Hovered.Y].SetAnimation("FlagRaise", parameters["FlagRaiseClipCount"]);
+				else
+					GameField[GameCell.Hovered.X, GameCell.Hovered.Y].SetAnimation("ClosedCellHover", parameters["ClosedCellHoverClipCount"]);
+			}
+		}
+
+		private void OpenCell(Coords cell)
+		{
+			Queue<Coords> queue = new Queue<Coords>();
+			queue.Enqueue(cell);
+			
+			while (queue.Count > 0)
+			{
+				var p = queue.Dequeue();
+				if (GameField[p.X, p.Y].BombCount == 0)
+					for (int i = 0; i < 8; i++)
+					{
+						int xn = p.X + dd[i, 0];
+						int yn = p.Y + dd[i, 1];
+						if (xn < 0 || yn < 0 || xn == gameWidth || yn == gameHeight || GameField[xn, yn].IsOpened
+							|| GameField[xn, yn].HasBomb || queue.Contains(new Coords(xn, yn))) continue;
+						queue.Enqueue(new Coords(xn, yn));
+					}
+				GameField[p.X, p.Y].SetAnimation("CellOpening", parameters["CellOpeningClipCount"]);
+				GameField[p.X, p.Y].IsOpened = true;
+				toDraw.Add(p);
+			}
+		}
+
+		private void GameOver(Coords cell)
+		{
+			for (int x = 0; x < gameWidth; x++)
+			{
+				for (int y = 0; y < gameHeight; y++)
+				{
+					if (GameField[x, y].HasBomb)
+					{
+						GameField[x, y].SetAnimation("CellOpening", parameters["CellOpeningClipCount"]);
+						GameField[x, y].IsOpened = true;
+						toDraw.Add(new Coords(x, y));
+					}
+				}
+			}
 		}
 
 		private void StartGame()
@@ -227,8 +315,48 @@ namespace Sapper_2019
 			}
 		}
 
+		private void GenerateField(Coords startPoint)
+		{
+			Random generator = new Random((int)(DateTime.Now.Ticks % int.MaxValue));
+			SortedSet<Coords> prohibited = new SortedSet<Coords>();
+			prohibited.Add(startPoint);
+			for (int i = 0; i < 8; i++)
+			{
+				int xn = startPoint.X + dd[i, 0];
+				int yn = startPoint.Y + dd[i, 1];
+				if (xn < 0 || yn < 0 || xn == gameWidth || yn == gameHeight) continue;
+				prohibited.Add(new Coords(xn, yn));
+			}
+			int bombLeft = bombCount;
+			while (bombLeft > 0)
+			{
+				int xn = generator.Next(gameWidth);
+				int yn = generator.Next(gameHeight);
+				if (prohibited.Contains(new Coords(xn, yn))) continue;
+				if (GameField[xn, yn].HasBomb) continue;
+				bombLeft--;
+				GameField[xn, yn].HasBomb = true;
+			}
+			for (int x = 0; x < gameWidth; x++)
+			{
+				for (int y = 0; y < gameHeight; y++)
+				{
+					GameField[x, y].Inited = true;
+					for (int i = 0; i < 8; i++)
+					{
+						int xn = x + dd[i, 0];
+						int yn = y + dd[i, 1];
+						if (xn < 0 || yn < 0 || xn == gameWidth || yn == gameHeight) continue;
+						if (GameField[xn, yn].HasBomb) GameField[x, y].BombCount++;
+					}
+					if (GameField[x, y].HasBomb) GameField[x, y].BombCount = 9;
+				}
+			}
+		}
+
 		private void InitialGameField()
 		{
+			gfGraphics.Clear(Color.White);
 			Pen pen = new Pen(colorTheme["GridColor"], gridWidth);
 			int w = gameField.Width;
 			int h = gameField.Height;
@@ -242,6 +370,17 @@ namespace Sapper_2019
 			{
 				int Y = y * cellSize + y * gridWidth;
 				gfGraphics.DrawLine(pen, 0, Y, w, Y);
+			}
+			for (int x = 0; x < gameWidth; x++)
+			{
+				for (int y = 0; y < gameHeight; y++)
+				{
+					var rect = new Rectangle(x * cellSize + gridWidth * (x + 1),
+					y * cellSize + gridWidth * (y + 1),
+					cellSize, cellSize);
+					gfGraphics.DrawImage(textures[GameField[x, y].GetFrameName()],
+						rect);
+				}
 			}
 		}
 
@@ -333,11 +472,13 @@ namespace Sapper_2019
 	public struct GameCell
 	{
 		public static Coords Hovered { get; set; }
+		public static Coords PressedL { get; set; }
+		public static Coords PressedR { get; set; }
 		public bool HasBomb { get; set; }
 		public bool HasFlag { get; set; }
 		public bool IsOpened { get; set; }
-		public bool Inited { get; private set; }
-		public int BombCount { get; private set; }
+		public bool Inited { get; set; }
+		public int BombCount { get; set; }
 
 		private int clipCount;
 		private int index;
@@ -350,10 +491,11 @@ namespace Sapper_2019
 			index = 0;
 		}
 
-		public void NextFrame()
+		public bool NextFrame()
 		{
-			if (index == clipCount - 1) return;
+			if (index == clipCount - 1) return true;
 			index++;
+			return false;
 		}
 
 		public bool PrevFrame()
@@ -368,20 +510,9 @@ namespace Sapper_2019
 			return animation + index.ToString();
 		}
 
-		public void UpdateFrame()
-		{
-
-		}
-
 		public void SetBombCount(int bombCount)
 		{
 			BombCount = bombCount;
-		}
-
-		public void InitCell(bool hasBomb)
-		{
-			Inited = true;
-			HasBomb = hasBomb;
 		}
 	}
 
